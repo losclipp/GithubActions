@@ -43,10 +43,13 @@ jobs:
         run: dotnet publish --configuration Release --no-build --output ./publish
 
       - name: Create deployment package
+        run: zip -r app.zip ./publish
+          
+      - name: Name the package
         run: |
-          zip -r app.zip ./publish
-          echo "PACKAGE_NAME=myapi-${GITHUB_SHA}.zip" >> $GITHUB_ENV
-          mv app.zip $PACKAGE_NAME
+          PACKAGE_NAME="githubActions-${GITHUB_SHA}.zip"
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
+          mv app.zip "$PACKAGE_NAME"
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
@@ -60,8 +63,8 @@ jobs:
           az storage blob upload \
             --account-name ${{ env.STORAGE_ACCOUNT }} \
             --container-name ${{ env.CONTAINER_NAME }} \
-            --file $PACKAGE_NAME \
-            --name $PACKAGE_NAME \
+            --file ${{ env.PACKAGE_NAME }} \
+            --name ${{ env.PACKAGE_NAME }}  \
             --auth-mode login \
             --overwrite true
 
